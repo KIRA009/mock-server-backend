@@ -1,0 +1,5 @@
+.idea/
+__pycache__/
+*.sqlite3
+mock_server_backend/.env
+app/migrations/
