@@ -1,7 +1,7 @@
 from django.views import View
 from django.db import transaction
 
-from .models import BaseEndpoint, RelativeEndpoint, Schema, PrimitiveDataType, SchemaData
+from .models import BaseEndpoint, RelativeEndpoint, Schema, PrimitiveDataType, SchemaData, Field
 from .validators import *
 from utils.exceptions import AccessDenied
 
@@ -56,19 +56,44 @@ class RelativeEndpointView(View):
 
 class UpdateSchemaView(View):
 	@update_endpoint_schema_schema
-	def put(self, request):
+	def post(self, request):
 		data = request.json
-		relative_endpoint = RelativeEndpoint.objects.get(id=data['id'])
-		schema = dict()
+		new_fields = []
+		endpoint = RelativeEndpoint.objects.get(id=data['id'])
+		endpoint.fields.exclude(
+			id__in=[field['id'] for field in data['fields'] if 'id' in field and field['id'] > 0]
+		).delete()
 		for field in data['fields']:
-			if field['type'] == 'schema':
-				schema[field['key']] = Schema.objects.get(name=field['value']).get_schema()
+			if 'isChanged' not in field:
+				continue
+			if field['isChanged']:
+				if field['type'] == 'schema':
+					Schema.objects.get(name=field['value'])
+				else:
+					if field['value'] not in PrimitiveDataType.CHOICES:
+						raise AccessDenied(
+							f"Please enter valid data type for '{field['key']}', i.e. one of "
+							f"{', '.join(PrimitiveDataType.CHOICES)}"
+						)
+				Field.objects.filter(id=field['id']).update(key=field['key'], value=field['value'], type=field['type'])
 			else:
-				data_types = [k[0] for k in PrimitiveDataType.FIELD_CHOICES]
-				if field['value'] not in data_types:
-					raise AccessDenied(f"Please enter valid data type, i.e. one of {', '.join(data_types)}")
-				schema[field['key']] = field['value']
-		print(schema)
+				if field['type'] == 'schema':
+					Schema.objects.get(name=field['value'])
+				else:
+					if field['value'] not in PrimitiveDataType.CHOICES:
+						raise AccessDenied(
+							f"Please enter valid data type for '{field['key']}', i.e. one of "
+							f"{', '.join(PrimitiveDataType.CHOICES)}"
+						)
+				new_fields.append(field)
+		Field.objects.bulk_create(
+			[
+				Field(
+					key=field['key'], value=field['value'], type=field['type'], relative_endpoint_id=data['id']
+				) for field in new_fields
+			]
+		)
+		return dict(fields=endpoint.fields.all().detail())
 
 
 class SchemaView(View):
@@ -87,7 +112,7 @@ class SchemaView(View):
 			schema = Schema.objects.create(name=data['name'])
 			schema_datas = []
 			for field in data['fields']:
-				schema_data = SchemaData(schema=schema, key=field['key'], is_value_primitive=(field['type'] == 'value'))
+				schema_data = SchemaData(schema=schema, key=field['key'], type=field['type'])
 				if field['type'] == 'schema':
 					schema_data.value = Schema.objects.get(name=field['value']).id
 				else:

@@ -7,6 +7,7 @@ urlpatterns = list(
 		('', ServerStatusView),
 		('baseEndpoints/', BaseEndpointView),
 		('relativeEndpoints/', RelativeEndpointView),
-		('schema/', SchemaView)
+		('schema/', SchemaView),
+		('updateSchema/', UpdateSchemaView),
 	])
 )

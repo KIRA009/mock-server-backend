@@ -19,7 +19,6 @@ class RelativeEndpoint(AutoCreatedUpdatedMixin):
 	)
 	base_endpoint = models.ForeignKey(BaseEndpoint, on_delete=models.CASCADE, related_name='relative_endpoints')
 	endpoint = models.TextField(blank=True, default='')
-	schema = models.TextField(default='{}')
 	method = models.TextField(max_length=4, choices=METHODS)
 	is_paginated = models.BooleanField(default=False)
 	records_per_page = models.IntegerField(default=1)
@@ -27,20 +26,15 @@ class RelativeEndpoint(AutoCreatedUpdatedMixin):
 
 	process_fields = AutoCreatedUpdatedMixin.get_process_fields_copy()
 	process_fields.update(**dict(
-		schema=lambda x: json.loads(x)
+		fields=lambda x: x.fields.detail()
 	))
-
-	def save(self):
-		if isinstance(self.schema, dict):
-			self.schema = json.dumps(self.schema)
-		super().save()
 
 
 class Schema(AutoCreatedUpdatedMixin):
 	name = models.TextField(blank=False, null=False)
 
 	def resolve_schema(self, data):
-		if data.is_value_primitive:
+		if data.type == Field.VALUE:
 			return PrimitiveDataType.CHOICES[data.value]
 		schema = dict()
 		for _data in Schema.objects.get(id=data.value).schema_data.all():
@@ -61,15 +55,28 @@ class Schema(AutoCreatedUpdatedMixin):
 	))
 
 
+class PrimitiveDataType:
+	CHOICES = ['string', 'number', 'boolean']
+
+
+class Field(AutoCreatedUpdatedMixin):
+	VALUE = 'value'
+	SCHEMA = 'schema'
+	TYPES = (
+		(VALUE, VALUE),
+		(SCHEMA, SCHEMA)
+	)
+	relative_endpoint = models.ForeignKey(RelativeEndpoint, on_delete=models.CASCADE, related_name='fields')
+	key = models.CharField(null=False, max_length=255)
+	type = models.TextField(choices=TYPES, null=False)
+	value = models.CharField(null=False, max_length=255)
+
+	exclude_fields = AutoCreatedUpdatedMixin.get_exclude_fields_copy()
+	exclude_fields += ['relative_endpoint']
+
+
 class SchemaData(AutoCreatedUpdatedMixin):
 	schema = models.ForeignKey(Schema, on_delete=models.CASCADE, related_name='schema_data')
 	key = models.CharField(max_length=255)
 	value = models.IntegerField()
-	is_value_primitive = models.BooleanField(default=True)
-
-
-class PrimitiveDataType:
-	STRING = 'string'
-	NUMBER = 'number'
-	BOOLEAN = 'boolean'
-	CHOICES = [STRING, NUMBER, BOOLEAN]
+	type = models.TextField(choices=Field.TYPES, null=False)
