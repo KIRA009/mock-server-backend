@@ -20,13 +20,17 @@ class RelativeEndpoint(AutoCreatedUpdatedMixin):
 	base_endpoint = models.ForeignKey(BaseEndpoint, on_delete=models.CASCADE, related_name='relative_endpoints')
 	endpoint = models.TextField(blank=True, default='')
 	method = models.TextField(max_length=4, choices=METHODS)
-	is_paginated = models.BooleanField(default=False)
-	records_per_page = models.IntegerField(default=1)
-	total_pages = models.IntegerField(default=1)
+	meta_data = models.TextField(blank=True, default='{}')
+
+	def save(self, *args, **kwargs):
+		if isinstance(self.meta_data, dict):
+			self.meta_data = json.dumps(self.meta_data)
+		super().save(*args, **kwargs)
 
 	process_fields = AutoCreatedUpdatedMixin.get_process_fields_copy()
 	process_fields.update(**dict(
-		fields=lambda x: x.fields.detail()
+		fields=lambda x: x.fields.detail(),
+		meta_data=lambda x: json.loads(x)
 	))
 
 
