@@ -15,9 +15,7 @@ def create_schema(props):
                 required.append(k)
             props[k], req = create_schema(v)
             if req:
-                # print(props, req, '===============')
                 reqs += req
-    # print(props, required, '++++++++++++++')
     if reqs:
         props['required'] = reqs
     return props, required
@@ -25,7 +23,7 @@ def create_schema(props):
 
 def validate(*_properties):
     def inner(func):
-        def inner2(cls, request, **kwargs):
+        def inner2(request, **kwargs):
             if 'json' in request.__dict__:
                 data = request.json
             else:
@@ -40,7 +38,7 @@ def validate(*_properties):
             )
             try:
                 jsonschema.validate(data, schema)
-                return func(cls, request, **kwargs)
+                return func(request, **kwargs)
             except jsonschema.exceptions.ValidationError as e:
                 path = ''
                 for i in e.path:

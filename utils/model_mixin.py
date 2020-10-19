@@ -36,6 +36,7 @@ class AutoCreatedUpdatedMixin(models.Model):
             auto_updated_at_is_disabled = kwargs.pop("disable_auto_updated_at", False)
             if not auto_updated_at_is_disabled:
                 self.updated_at = tz.now() + tz.timedelta(hours=5, minutes=30)
+        self.full_clean()
         super(AutoCreatedUpdatedMixin, self).save(*args, **kwargs)
 
     def detail(self):

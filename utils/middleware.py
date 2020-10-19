@@ -4,6 +4,7 @@ from django.http import JsonResponse
 import traceback
 
 from mock_server_backend.settings import DEBUG
+from .exceptions import AccessDenied
 
 
 def jsonify(data):
@@ -19,7 +20,10 @@ class CustomMiddleware(common.CommonMiddleware):
         if request.method == "OPTIONS" or "/admin/" in request.path:
             return
         if request.content_type == "application/json":
-            request.json = json.loads(request.body)
+            if request.body:
+                request.json = json.loads(request.body)
+            else:
+                request.json = dict()
 
     def process_response(self, request, response):
         if "/admin/" in request.path:

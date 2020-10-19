@@ -1,5 +1,6 @@
 from django.db import models
 import json
+import re
 
 from utils.model_mixin import AutoCreatedUpdatedMixin
 
@@ -18,9 +19,15 @@ class RelativeEndpoint(AutoCreatedUpdatedMixin):
 		(PUT, PUT)
 	)
 	base_endpoint = models.ForeignKey(BaseEndpoint, on_delete=models.CASCADE, related_name='relative_endpoints')
+	regex_endpoint = models.TextField(blank=True, default='')
 	endpoint = models.TextField(blank=True, default='')
 	method = models.TextField(max_length=4, choices=METHODS)
-	meta_data = models.TextField(blank=True, default='{}')
+	meta_data = models.TextField(blank=True, default='{"num_pages": 1, "is_paginated": false,"records_per_page": 1}')
+
+	@property
+	def url_params(self):
+		pat = re.compile(r'<(.*?)>')
+		return pat.findall(self.regex_endpoint)
 
 	def save(self, *args, **kwargs):
 		if isinstance(self.meta_data, dict):
@@ -30,7 +37,8 @@ class RelativeEndpoint(AutoCreatedUpdatedMixin):
 	process_fields = AutoCreatedUpdatedMixin.get_process_fields_copy()
 	process_fields.update(**dict(
 		fields=lambda x: x.fields.detail(),
-		meta_data=lambda x: json.loads(x)
+		meta_data=lambda x: json.loads(x),
+		url_params=lambda x: x.url_params
 	))
 
 
@@ -66,14 +74,19 @@ class PrimitiveDataType:
 class Field(AutoCreatedUpdatedMixin):
 	VALUE = 'value'
 	SCHEMA = 'schema'
+	URL_PARAM = 'url_param'
+	QUERY_PARAM = 'query_param'
 	TYPES = (
 		(VALUE, VALUE),
-		(SCHEMA, SCHEMA)
+		(SCHEMA, SCHEMA),
+		(URL_PARAM, URL_PARAM),
+		(QUERY_PARAM, QUERY_PARAM)
 	)
 	relative_endpoint = models.ForeignKey(RelativeEndpoint, on_delete=models.CASCADE, related_name='fields')
 	key = models.CharField(null=False, max_length=255)
 	type = models.TextField(choices=TYPES, null=False)
 	value = models.CharField(null=False, max_length=255)
+	is_array = models.BooleanField(default=False)
 
 	exclude_fields = AutoCreatedUpdatedMixin.get_exclude_fields_copy()
 	exclude_fields += ['relative_endpoint']
