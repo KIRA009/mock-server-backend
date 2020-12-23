@@ -1,22 +1,23 @@
 from django.db import transaction
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_GET, require_POST
 
 from .validators import *
 from .selectors import base_endpoints_get, relative_endpoints_get, schemas_get
-from .services import base_endpoint_add, relative_endpoint_add, schema_add, endpoint_update
+from .services import base_endpoint_add, relative_endpoint_add, schema_add, endpoint_schema_update, \
+	relative_endpoint_update, relative_endpoint_delete
 
 
-@require_http_methods(["GET"])
-def check_server_status(request):
+@require_GET
+def check_server_status(_):
 	return dict()
 
 
-@require_http_methods(["GET"])
-def get_base_endpoints(request):
+@require_GET
+def get_base_endpoints(_):
 	return dict(baseEndpoints=base_endpoints_get())
 
 
-@require_http_methods(["POST"])
+@require_POST
 @create_base_endpoint_schema
 def add_base_endpoint(request):
 	data = request.json
@@ -24,12 +25,12 @@ def add_base_endpoint(request):
 	return dict(id=endpoint.id)
 
 
-@require_http_methods(["GET"])
-def get_relative_endpoints(request, base_endpoint_id):
+@require_GET
+def get_relative_endpoints(_, base_endpoint_id):
 	return dict(relativeEndpoints=relative_endpoints_get(base_endpoint_id))
 
 
-@require_http_methods(["POST"])
+@require_POST
 @create_relative_endpoint_schema
 def add_relative_endpoint(request):
 	data = request.json
@@ -40,23 +41,39 @@ def add_relative_endpoint(request):
 	)
 
 
-@require_http_methods(["POST"])
+@require_POST
 @update_endpoint_schema_schema
-def update_schema(request):
+def update_endpoint_schema(request):
 	data = request.json
-	endpoint = endpoint_update(data)
+	endpoint = endpoint_schema_update(data)
 	return dict(fields=endpoint.fields.all().detail())
 
 
-@require_http_methods(["GET"])
-def get_schemas(request):
+@require_GET
+def get_schemas(_):
 	return dict(schemas=schemas_get())
 
 
-@require_http_methods(["POST"])
+@require_POST
 @create_schema_schema
 @transaction.atomic
 def add_schema(request):
 	data = request.json
 	schema_add(data)
+	return dict()
+
+
+@require_POST
+@create_relative_endpoint_schema
+def update_relative_endpoint(request):
+	data = request.json
+	relative_endpoint_update(data)
+	return dict()
+
+
+@require_POST
+@delete_endpoint_schema
+def delete_relative_endpoint(request):
+	data = request.json
+	relative_endpoint_delete(data)
 	return dict()

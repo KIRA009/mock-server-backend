@@ -1,7 +1,6 @@
-import re
-
 from .models import BaseEndpoint, RelativeEndpoint, Schema, SchemaData, Field, PrimitiveDataType
-from utils.exceptions import AccessDenied
+from utils.exceptions import AccessDenied, NotAllowed
+from .utils import format_and_regex_endpoint
 
 
 def base_endpoint_add(data):
@@ -14,19 +13,12 @@ def base_endpoint_add(data):
 def relative_endpoint_add(data):
 	methods = [k[0] for k in RelativeEndpoint.METHODS]
 	if data['method'] not in methods:
-		raise AccessDenied(f"Please enter valid method, i.e. one of {', '.join(methods)}")
-	if not data['endpoint'].startswith('/'):
-		data['endpoint'] = '/' + data['endpoint']
-	if not data['endpoint'].endswith('/'):
-		data['endpoint'] += '/'
-	data['regex_endpoint'] = data['endpoint']
-	pat = re.compile(r':(.*?)/')
-	for url_param in pat.findall(data['endpoint']):
-		data['regex_endpoint'] = data['regex_endpoint'].replace(f':{url_param}', f'<{url_param}>')
+		raise NotAllowed(f"Please enter valid method, i.e. one of {', '.join(methods)}")
+	data['endpoint'], data['regex_endpoint'] = format_and_regex_endpoint(data['endpoint'])
 	if RelativeEndpoint.objects.filter(
 			base_endpoint_id=data['id'], endpoint=data['endpoint'], method=data['method']
 	).exists():
-		raise AccessDenied("Endpoint with same method already exists")
+		raise NotAllowed("Endpoint with same method already exists")
 	relative_endpoint = RelativeEndpoint.objects.create(
 		base_endpoint_id=data['id'], endpoint=data['endpoint'], method=data['method'],
 		regex_endpoint=data['regex_endpoint']
@@ -36,7 +28,7 @@ def relative_endpoint_add(data):
 
 def schema_add(data):
 	if Schema.objects.filter(name=data['name']).exists():
-		raise AccessDenied(f"{data['name']} schema already exists")
+		raise NotAllowed(f"{data['name']} schema already exists")
 	schema = Schema.objects.create(name=data['name'])
 	schema_datas = []
 	for field in data['fields']:
@@ -45,7 +37,7 @@ def schema_add(data):
 			schema_data.value = Schema.objects.get(name=field['value']).id
 		else:
 			if field['value'] not in PrimitiveDataType.CHOICES:
-				raise AccessDenied(
+				raise NotAllowed(
 					f"Please enter valid data type, i.e. one of {', '.join(PrimitiveDataType.CHOICES)}"
 				)
 			schema_data.value = PrimitiveDataType.CHOICES.index(field['value'])
@@ -53,7 +45,7 @@ def schema_add(data):
 	SchemaData.objects.bulk_create(schema_datas)
 
 
-def endpoint_update(data):
+def endpoint_schema_update(data):
 	new_fields = []
 	endpoint = RelativeEndpoint.objects.get(id=data['id'])
 	endpoint.fields.exclude(
@@ -67,27 +59,27 @@ def endpoint_update(data):
 			continue
 		if field['type'] == Field.SCHEMA:
 			if field['value'] not in schemas:  # check if that data type is acceptable
-				raise AccessDenied(
+				raise NotAllowed(
 					f"Please enter valid schema name for '{field['key']}', i.e. one of "
 					f"{', '.join(schemas)}"
 				)
 		elif field['type'] == Field.VALUE:
 			if field['value'] not in PrimitiveDataType.CHOICES:  # check if that data type is acceptable
-				raise AccessDenied(
+				raise NotAllowed(
 					f"Please enter valid data type for '{field['key']}', i.e. one of "
 					f"{', '.join(PrimitiveDataType.CHOICES)}"
 				)
 		elif field['type'] == Field.URL_PARAM:
 			if field['value'] not in available_url_params:
-				raise AccessDenied(
+				raise NotAllowed(
 					f"Please enter valid url param for '{field['key']}', i.e. one of "
 					f"{', '.join(available_url_params)}"
 				)
 		elif field['type'] == Field.QUERY_PARAM:
 			if not field['value']:
-				raise AccessDenied(f"Please enter valid string for '{field['key']}")
+				raise NotAllowed(f"Please enter valid string for '{field['key']}")
 		else:
-			raise AccessDenied(f'The field type should be one of {Field.SCHEMA}, {Field.VALUE}, {Field.URL_PARAM}')
+			raise NotAllowed(f'The field type should be one of {Field.SCHEMA}, {Field.VALUE}, {Field.URL_PARAM}')
 		if field['isChanged']:  # old fields
 			fields_to_change.append(field)
 		else:  # new fields
@@ -107,3 +99,17 @@ def endpoint_update(data):
 	endpoint.meta_data = data['meta_data']
 	endpoint.save()
 	return endpoint
+
+
+def relative_endpoint_update(data):
+	relative_endpoint = RelativeEndpoint.objects.select_related('base_endpoint').get(id=data['id'])
+	data['endpoint'], data['regex_endpoint'] = format_and_regex_endpoint(data['endpoint'])
+	if RelativeEndpoint.objects.filter(base_endpoint=relative_endpoint.base_endpoint_id, endpoint=data['endpoint'], method=data['method']).exists():
+		raise NotAllowed("Endpoint with same url exists")
+	RelativeEndpoint.objects.filter(id=data['id']).update(
+		endpoint=data['endpoint'], method=data['method'], regex_endpoint=data['regex_endpoint']
+	)
+
+
+def relative_endpoint_delete(data):
+	RelativeEndpoint.objects.filter(id=data['id']).delete()

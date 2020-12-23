@@ -34,3 +34,7 @@ create_schema_schema = validate(
 		**make_string_object("value"),
 	))
 )
+
+delete_endpoint_schema = validate(
+	make_number_object("id")
+)

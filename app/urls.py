@@ -11,6 +11,8 @@ urlpatterns = list(
 		('relative-endpoint/add/', add_relative_endpoint),
 		('schemas/get/', get_schemas),
 		('schema/add/', add_schema),
-		('update_schema/', update_schema),
+		('update_schema/', update_endpoint_schema),
+		('relative-endpoint/update/', update_relative_endpoint),
+		('relative-endpoint/delete/', delete_relative_endpoint)
 	])
 )

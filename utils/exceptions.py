@@ -15,3 +15,10 @@ class AccessDenied(CustomBaseException):
         super().__init__()
         self.message = message
         self.status_code = 401
+
+
+class NotAllowed(CustomBaseException):
+    def __init__(self, message='This action is not allowed'):
+        super().__init__()
+        self.message = message
+        self.status_code = 409
