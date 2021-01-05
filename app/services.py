@@ -1,11 +1,11 @@
 from .models import BaseEndpoint, RelativeEndpoint, Schema, SchemaData, Field, PrimitiveDataType
-from utils.exceptions import AccessDenied, NotAllowed
+from utils.exceptions import NotAllowed
 from .utils import format_and_regex_endpoint
 
 
 def base_endpoint_add(data):
-	if not data['endpoint'].startswith('/'):
-		data['endpoint'] = '/' + data['endpoint']
+	if data['endpoint'].startswith('/'):
+		data['endpoint'] = data['endpoint'][1:]
 	endpoint = BaseEndpoint.objects.get_or_create(endpoint=data['endpoint'])
 	return endpoint
 

@@ -38,7 +38,6 @@ class BaseQuerySet(QuerySet):
 def query_debugger(func):
 	def inner(*args, **kwargs):
 		reset_queries()
-		start = time.perf_counter()
 		result = func(*args, **kwargs)
 		queries = len(connection.queries)
 		for i in connection.queries:

@@ -26,7 +26,7 @@ class RelativeEndpoint(AutoCreatedUpdatedMixin):
 
 	@property
 	def url_params(self):
-		pat = re.compile(r'<(.*?)>')
+		pat = re.compile(r'<str:(.*?)>')
 		return pat.findall(self.regex_endpoint)
 
 	def save(self, *args, **kwargs):
