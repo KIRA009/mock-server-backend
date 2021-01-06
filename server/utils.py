@@ -1,17 +1,6 @@
 from app.models import Schema
 
-from utils.exceptions import NotAllowed
-
-
-def get_random_value(_type):
-    if _type == 'string':
-        return 'abc'
-    if _type == 'boolean':
-        return True
-    if _type == 'number':
-        return 9
-    raise NotAllowed('Only value of type string, number or boolean is allowed')
-
+from .fakers import get_random_value
 
 class Response:
     def __init__(self, fields):
@@ -30,12 +19,12 @@ class Response:
         return response
 
     def _value_field(self, field):
-        return get_random_value(field.value)
+        return get_random_value(field.key, field.value)
 
     def _resolve_schema(self, obj):
         for k, v in obj.items():
             if isinstance(v, str):
-                obj[k] = get_random_value(v)
+                obj[k] = get_random_value(k, v)
             else:
                 obj[k] = self._resolve_schema(v)
         return obj
