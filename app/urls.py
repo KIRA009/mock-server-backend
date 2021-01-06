@@ -8,7 +8,7 @@ urlpatterns = list(
 		('base-endpoints/get/', get_base_endpoints),
 		('base-endpoint/add/', add_base_endpoint),
 		('relative-endpoints/get/<int:base_endpoint_id>/', get_relative_endpoints),
-		('relative-endpoint/add/', add_relative_endpoint),
+		('relative-endpoints/add/', add_relative_endpoint),
 		('schemas/get/', get_schemas),
 		('schema/add/', add_schema),
 		('update_schema/', update_endpoint_schema),
