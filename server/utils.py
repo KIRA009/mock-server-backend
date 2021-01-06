@@ -30,7 +30,6 @@ class Response:
 
     def create_response(self):
         response = dict()
-        response['items'] = list()
 
         if self.meta_data['is_paginated']:
             response['page_no'] = self.page_no
@@ -48,7 +47,7 @@ class Response:
                         self.meta_data['records_per_page']) \
                     )
         else:
-            response['items'] = self.get_data(self.meta_data['num_records'])
+            response = self.get_data(1)[0]
 
         return response
 
