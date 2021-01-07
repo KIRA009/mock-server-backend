@@ -22,7 +22,7 @@ class RelativeEndpoint(AutoCreatedUpdatedMixin):
 	regex_endpoint = models.TextField(blank=True, default='')
 	endpoint = models.TextField(blank=True, default='')
 	method = models.TextField(max_length=4, choices=METHODS)
-	meta_data = models.TextField(blank=True, default='{"num_pages": 1, "is_paginated": false,"records_per_page": 1}')
+	meta_data = models.TextField(blank=True, default='{"num_records": 1, "is_paginated": false, "records_per_page": 1}')
 
 	@property
 	def url_params(self):
