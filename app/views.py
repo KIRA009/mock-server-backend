@@ -36,7 +36,7 @@ def add_relative_endpoint(request):
 	data = request.json
 	relative_endpoint = relative_endpoint_add(data)
 	return dict(
-		id=relative_endpoint.id, regex_endpoint=relative_endpoint.regex_endpoint,
+		id=relative_endpoint.id, regex_endpoint=relative_endpoint.regex_endpoint, endpoint=relative_endpoint.endpoint,
 		url_params=relative_endpoint.url_params
 	)
 

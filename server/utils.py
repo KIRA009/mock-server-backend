@@ -4,14 +4,18 @@ from .fakers import get_random_value
 import json
 
 class Response:
-    def __init__(self, fields, meta_data, page_no):
+    def __init__(self, fields, meta_data, page_no, url_params, query_params):
         self.fields = fields
         self.meta_data = json.loads(meta_data)
         self.page_no = int(page_no)
+        self.url_params = url_params
+        self.query_params = query_params
         self.cache = dict()  # maybe used for caching results
         self.mapping = dict(
             value=self._value_field,
-            schema=self._schema_field
+            schema=self._schema_field,
+            url_param=self._url_param_field,
+            query_param=self._query_param_field,
         )
 
     def get_data(self, count):
@@ -21,6 +25,7 @@ class Response:
             page = dict()
             for field in self.fields:
                 page[field.key] = self.mapping[field.type](field)
+            if not page: continue
             data.append(page)
 
         return data
@@ -62,3 +67,9 @@ class Response:
     def _schema_field(self, field):
         schema = Schema.objects.get(name=field.value).get_schema()
         return self._resolve_schema(schema)
+
+    def _url_param_field(self, field):
+        return self.url_params[field.key]
+
+    def _query_param_field(self, field):
+        return self.query_params.get(field.key, get_random_value(field.key, 'string'))
