@@ -1,3 +1,5 @@
+import json
+
 from .models import BaseEndpoint, RelativeEndpoint, Schema, SchemaData, Field, PrimitiveDataType
 from utils.exceptions import NotAllowed
 from .utils import format_and_regex_endpoint
@@ -43,6 +45,7 @@ def schema_add(data):
 			schema_data.value = PrimitiveDataType.CHOICES.index(field['value'])
 		schema_datas.append(schema_data)
 	SchemaData.objects.bulk_create(schema_datas)
+	return schema.detail()
 
 
 def endpoint_schema_update(data):
@@ -113,3 +116,49 @@ def relative_endpoint_update(data):
 
 def relative_endpoint_delete(data):
 	RelativeEndpoint.objects.filter(id=data['id']).delete()
+
+
+def data_export():
+	response = dict()
+	response['base_endpoints'] = BaseEndpoint.objects.all().detail()
+	response['relative_endpoints'] = RelativeEndpoint.objects.all().detail()
+	response['schema'] = Schema.objects.all().detail()
+	response['fields'] = Field.objects.all().detail()
+	response['schema_data'] = SchemaData.objects.all().detail()
+	return response
+
+
+def data_import(data):
+	for model in [BaseEndpoint, RelativeEndpoint, Field, Schema, SchemaData]:
+		model.objects.all().delete()
+
+	base_endpoints = [BaseEndpoint(**endpoint) for endpoint in data['base_endpoints']]
+	BaseEndpoint.objects.bulk_create(base_endpoints)
+
+	relative_endpoints = []
+	fields = []
+	for endpoint in data['relative_endpoints']:
+		for field in endpoint['fields']:
+			field['relative_endpoint_id'] = endpoint['id']
+			fields.append(field)
+		del endpoint['fields']
+		del endpoint['url_params']
+		endpoint['base_endpoint_id'] = endpoint['base_endpoint']
+		del endpoint['base_endpoint']
+		endpoint['meta_data'] = json.dumps(endpoint['meta_data'])
+
+		relative_endpoints.append(RelativeEndpoint(**endpoint))
+	RelativeEndpoint.objects.bulk_create(relative_endpoints)
+	Field.objects.bulk_create([Field(**field) for field in fields])
+
+	schemas = []
+	for schema in data['schema']:
+		del schema['schema']
+		schemas.append(Schema(**schema))
+	Schema.objects.bulk_create(schemas)
+
+	for schema_data in data['schema_data']:
+		schema_data['schema_id'] = schema_data['schema']
+		del schema_data['schema']
+	schema_datas = [SchemaData(**schema_data) for schema_data in data['schema_data']]
+	SchemaData.objects.bulk_create(schema_datas)

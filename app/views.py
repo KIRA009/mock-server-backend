@@ -4,7 +4,7 @@ from django.views.decorators.http import require_GET, require_POST
 from .validators import *
 from .selectors import base_endpoints_get, relative_endpoints_get, schemas_get
 from .services import base_endpoint_add, relative_endpoint_add, schema_add, endpoint_schema_update, \
-	relative_endpoint_update, relative_endpoint_delete
+	relative_endpoint_update, relative_endpoint_delete, data_export, data_import
 
 
 @require_GET
@@ -59,8 +59,8 @@ def get_schemas(_):
 @transaction.atomic
 def add_schema(request):
 	data = request.json
-	schema_add(data)
-	return dict()
+	schema = schema_add(data)
+	return dict(schema=schema)
 
 
 @require_POST
@@ -76,4 +76,17 @@ def update_relative_endpoint(request):
 def delete_relative_endpoint(request):
 	data = request.json
 	relative_endpoint_delete(data)
+	return dict()
+
+
+@require_GET
+def export_data(request):
+	data = data_export()
+	return data
+
+
+@require_POST
+def import_data(request):
+	data = request.json
+	data_import(data)
 	return dict()

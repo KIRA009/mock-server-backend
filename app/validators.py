@@ -21,8 +21,9 @@ update_endpoint_schema_schema = validate(
 	)),
 	make_number_object("id"),
 	make_dict_object("meta_data", properties=dict(
-		**make_number_object("num_pages"),
-		**make_boolean_object("is_paginated")
+		**make_number_object("num_records"),
+		**make_boolean_object("is_paginated"),
+		**make_number_object("records_per_page")
 	))
 )
 

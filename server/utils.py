@@ -7,9 +7,6 @@ class Response:
     def __init__(self, fields, meta_data, page_no):
         self.fields = fields
         self.meta_data = json.loads(meta_data)
-        # NOTE: hardcoded for testing
-        self.meta_data['records_per_page'] = 5
-        self.meta_data['num_records'] = 13
         self.page_no = int(page_no)
         self.cache = dict()  # maybe used for caching results
         self.mapping = dict(

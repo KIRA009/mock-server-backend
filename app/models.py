@@ -60,8 +60,6 @@ class Schema(AutoCreatedUpdatedMixin):
 		return schema
 
 	process_fields = AutoCreatedUpdatedMixin.get_process_fields_copy()
-	exclude_fields = AutoCreatedUpdatedMixin.get_exclude_fields_copy()
-	exclude_fields += ['id']
 	process_fields.update(**dict(
 		schema=lambda x: x.get_schema()
 	))

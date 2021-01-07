@@ -30,6 +30,9 @@ class CustomMiddleware(common.CommonMiddleware):
             return super().process_response(request, response)
         if isinstance(response, dict):
             response = jsonify(response)
+        else:
+            if response.status_code == 404:
+                response = jsonify(dict(error="The requested url was not found", status_code=404))
         return super().process_response(request, response)
 
     def process_exception(self, request, exception):
