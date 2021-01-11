@@ -81,8 +81,11 @@ def endpoint_schema_update(data):
 		elif field['type'] == Field.QUERY_PARAM:
 			if not field['value']:
 				raise NotAllowed(f"Please enter valid string for '{field['key']}")
+		elif field['type'] == Field.POST_DATA:
+			if endpoint.method != 'POST':
+				raise NotAllowed(f'The endpoint should have a POST method')
 		else:
-			raise NotAllowed(f'The field type should be one of {Field.SCHEMA}, {Field.VALUE}, {Field.URL_PARAM}')
+			raise NotAllowed(f'The field type should be one of {", ".join(_[0] for _ in Field.TYPES)}')
 		if field['isChanged']:  # old fields
 			fields_to_change.append(field)
 		else:  # new fields
@@ -100,6 +103,7 @@ def endpoint_schema_update(data):
 		]
 	)
 	endpoint.meta_data = data['meta_data']
+	endpoint.headers = data['headers']
 	endpoint.save()
 	return endpoint
 

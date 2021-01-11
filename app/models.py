@@ -22,6 +22,7 @@ class RelativeEndpoint(AutoCreatedUpdatedMixin):
 	regex_endpoint = models.TextField(blank=True, default='')
 	endpoint = models.TextField(blank=True, default='')
 	method = models.TextField(max_length=4, choices=METHODS)
+	headers = models.TextField(blank=True, default='[]')
 	meta_data = models.TextField(blank=True, default='{"num_records": 1, "is_paginated": false, "records_per_page": 1}')
 
 	@property
@@ -32,12 +33,19 @@ class RelativeEndpoint(AutoCreatedUpdatedMixin):
 	def save(self, *args, **kwargs):
 		if isinstance(self.meta_data, dict):
 			self.meta_data = json.dumps(self.meta_data)
+		if isinstance(self.headers, list):
+			self.headers = json.dumps([dict(key=header['key'], value=header['value']) for header in self.headers])
 		super().save(*args, **kwargs)
+
+	@property
+	def _headers(self):
+		return json.loads(self.headers)
 
 	process_fields = AutoCreatedUpdatedMixin.get_process_fields_copy()
 	process_fields.update(**dict(
 		fields=lambda x: x.fields.detail(),
 		meta_data=lambda x: json.loads(x),
+		headers=lambda x: json.loads(x),
 		url_params=lambda x: x.url_params
 	))
 
@@ -74,11 +82,13 @@ class Field(AutoCreatedUpdatedMixin):
 	SCHEMA = 'schema'
 	URL_PARAM = 'url_param'
 	QUERY_PARAM = 'query_param'
+	POST_DATA = 'post_data'
 	TYPES = (
 		(VALUE, VALUE),
 		(SCHEMA, SCHEMA),
 		(URL_PARAM, URL_PARAM),
-		(QUERY_PARAM, QUERY_PARAM)
+		(QUERY_PARAM, QUERY_PARAM),
+		(POST_DATA, POST_DATA)
 	)
 	relative_endpoint = models.ForeignKey(RelativeEndpoint, on_delete=models.CASCADE, related_name='fields')
 	key = models.CharField(null=False, max_length=255)

@@ -27,5 +27,11 @@ def abc(request, route):
         raise NotFound('Matching api endpoint not found')
     if request.method != endpoint.method:
         raise NotAllowed("This method is not allowed")
-    response = Response(endpoint.fields.all(), endpoint.meta_data, request.GET.get('pageNo', '1'), url_params, request.GET.dict())
-    return JsonResponse(response.create_response())
+    data = request.json if endpoint.method == 'POST' else dict()
+    response = Response(
+        endpoint.fields.all(), endpoint.meta_data, request.GET.get('pageNo', '1'), url_params, request.GET.dict(), data
+    )
+    resp = JsonResponse(response.create_response())
+    for header in endpoint._headers:
+        resp.__setitem__(header['key'], header['value'])
+    return resp

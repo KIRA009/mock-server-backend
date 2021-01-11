@@ -1,21 +1,24 @@
 from app.models import Schema
+from utils.exceptions import NotAllowed
 
 from .fakers import get_random_value
 import json
 
 class Response:
-    def __init__(self, fields, meta_data, page_no, url_params, query_params):
+    def __init__(self, fields, meta_data, page_no, url_params, query_params, data):
         self.fields = fields
         self.meta_data = json.loads(meta_data)
         self.page_no = int(page_no)
         self.url_params = url_params
         self.query_params = query_params
         self.cache = dict()  # maybe used for caching results
+        self.data = data
         self.mapping = dict(
             value=self._value_field,
             schema=self._schema_field,
             url_param=self._url_param_field,
             query_param=self._query_param_field,
+            post_data=self._post_data_field
         )
 
     def get_data(self, count):
@@ -39,9 +42,6 @@ class Response:
             
             if (self.meta_data['num_records'] % self.meta_data['records_per_page']) != 0:
                 response['total_pages'] += 1
-            
-            if self.page_no > response['total_pages'] or self.page_no < 1:
-                return {}
 
             response['items'] = \
                     self.get_data( \
@@ -69,7 +69,12 @@ class Response:
         return self._resolve_schema(schema)
 
     def _url_param_field(self, field):
-        return self.url_params[field.key]
+        return self.url_params[field.value]
 
     def _query_param_field(self, field):
-        return self.query_params.get(field.key, get_random_value(field.key, 'string'))
+        return self.query_params.get(field.value, get_random_value(field.key, 'string'))
+
+    def _post_data_field(self, field):
+        if field.value not in self.data:
+            raise NotAllowed(f'{field.value} should be present in request body')
+        return self.data[field.value]

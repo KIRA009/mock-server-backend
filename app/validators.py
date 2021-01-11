@@ -19,6 +19,10 @@ update_endpoint_schema_schema = validate(
 		**make_string_object("value"),
 		**make_boolean_object("is_array")
 	)),
+	make_array_object("headers", _type="object", properties=dict(
+		**make_string_object("key"),
+		**make_string_object("value"),
+	)),
 	make_number_object("id"),
 	make_dict_object("meta_data", properties=dict(
 		**make_number_object("num_records"),
