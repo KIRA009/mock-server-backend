@@ -10,7 +10,7 @@ class AutoCreatedUpdatedMixin(models.Model):
     created_at = models.DateTimeField(blank=True, null=True)
     updated_at = models.DateTimeField(blank=True, null=True)
 
-    exclude_fields = ['created_at', 'updated_at']
+    exclude_fields = ["created_at", "updated_at"]
     process_fields = {}
 
     @classmethod
@@ -25,8 +25,8 @@ class AutoCreatedUpdatedMixin(models.Model):
 
     class Meta:
         abstract = True
-        ordering = ['-updated_at']
-        get_latest_by = 'updated_at'
+        ordering = ["-created_at"]
+        get_latest_by = "created_at"
 
     def save(self, *args, **kwargs):
         if not self.created_at:
@@ -40,10 +40,10 @@ class AutoCreatedUpdatedMixin(models.Model):
         super(AutoCreatedUpdatedMixin, self).save(*args, **kwargs)
 
     def detail(self):
-        ret = json.loads(serializers.serialize('json', [self]))[0]
-        ret['fields']['id'] = ret['pk']
+        ret = json.loads(serializers.serialize("json", [self]))[0]
+        ret["fields"]["id"] = ret["pk"]
         for i in self.exclude_fields:
-            del ret['fields'][i]
+            del ret["fields"][i]
         for k, v in self.process_fields.items():
-            ret['fields'][k] = v(ret['fields'].get(k, self))
-        return ret['fields']
+            ret["fields"][k] = v(ret["fields"].get(k, self))
+        return ret["fields"]

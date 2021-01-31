@@ -15,4 +15,6 @@ class BaseManager(Manager.from_queryset(BaseQuerySet)):
         try:
             return super().get(**kwargs)
         except self.model.DoesNotExist:
-            raise NotFound(f'The {self.model._meta.model_name} requested for does not exist')
+            raise NotFound(
+                f"The {self.model._meta.model_name} requested for does not exist"
+            )

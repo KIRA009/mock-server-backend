@@ -2,6 +2,7 @@ import django.middleware.common as common
 import json
 from django.http import JsonResponse
 import traceback
+import logging
 
 from mock_server_backend.settings import DEBUG
 from .exceptions import AccessDenied
@@ -21,7 +22,9 @@ class CustomMiddleware(common.CommonMiddleware):
             return
         if request.content_type == "application/json":
             if request.body:
+                logger = logging.getLogger("django")
                 request.json = json.loads(request.body)
+                logger.info(json.dumps(request.json, indent=4))
             else:
                 request.json = dict()
 
@@ -32,11 +35,13 @@ class CustomMiddleware(common.CommonMiddleware):
             response = jsonify(response)
         else:
             if response.status_code == 404:
-                response = jsonify(dict(error="The requested url was not found", status_code=404))
+                response = jsonify(
+                    dict(error="The requested url was not found", status_code=404)
+                )
         return super().process_response(request, response)
 
     def process_exception(self, request, exception):
-        if 'status_code' in exception.__dict__:
+        if "status_code" in exception.__dict__:
             return dict(error=exception.message, status_code=exception.status_code)
         if DEBUG:
             print(traceback.format_exc())

@@ -20,7 +20,7 @@ import app.urls
 import server.urls
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/', include(app.urls)),
-    path('server/', include(server.urls)),
+    path("admin/", admin.site.urls),
+    path("api/", include(app.urls)),
+    path("server/", include(server.urls)),
 ]

@@ -9,22 +9,23 @@ def create_schema(props):
     reqs = []
     for k, v in props.items():
         if isinstance(v, dict):
-            if 'properties' in v:
-                ret = dict(type="object", properties=v['properties'])
-            if 'req' in v and v['req']:
+            if "properties" in v:
+                pass
+            if "req" in v and v["req"]:
                 required.append(k)
             props[k], req = create_schema(v)
             if req:
                 reqs += req
     if reqs:
-        props['required'] = reqs
+        props["required"] = reqs
+    props["additionalProperties"] = False
     return props, required
 
 
 def validate(*_properties):
     def inner(func):
         def inner2(request, **kwargs):
-            if 'json' in request.__dict__:
+            if "json" in request.__dict__:
                 data = request.json
             else:
                 data = request.POST.dict()
@@ -34,22 +35,25 @@ def validate(*_properties):
             schema = dict(
                 type="object",
                 properties=properties,
-                required=required
+                required=required,
+                additionalProperties=False,
             )
             try:
                 jsonschema.validate(data, schema)
                 return func(request, **kwargs)
             except jsonschema.exceptions.ValidationError as e:
-                path = ''
+                path = ""
                 for i in e.path:
-                    path += f'{i}.'
-                raise AccessDenied(f'{path}{e.message}')
+                    path += f"{i}."
+                raise AccessDenied(f"{path}{e.message}")
+
         return inner2
+
     return inner
 
 
 def get_required(is_required):
-    return {'req': is_required}
+    return {"req": is_required}
 
 
 def make_object(x, _type, is_required=True, **kwargs):
