@@ -2,7 +2,6 @@ import django.middleware.common as common
 import json
 from django.http import JsonResponse
 import traceback
-import logging
 
 from mock_server_backend.settings import DEBUG
 from .exceptions import AccessDenied
@@ -22,9 +21,7 @@ class CustomMiddleware(common.CommonMiddleware):
             return
         if request.content_type == "application/json":
             if request.body:
-                logger = logging.getLogger("django")
                 request.json = json.loads(request.body)
-                logger.info(json.dumps(request.json, indent=4))
             else:
                 request.json = dict()
 

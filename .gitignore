@@ -3,4 +3,5 @@ __pycache__/
 .vscode
 *.sqlite3
 mock_server_backend/.env
-app/migrations/
+app/migrations/**
+!app/migrations/__init__.py
