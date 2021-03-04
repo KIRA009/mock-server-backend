@@ -31,7 +31,7 @@ class CustomMiddleware(common.CommonMiddleware):
         if isinstance(response, dict):
             response = jsonify(response)
         else:
-            if response.status_code == 404:
+            if response.status_code == 404 and "/server/" not in request.path:
                 response = jsonify(
                     dict(error="The requested url was not found", status_code=404)
                 )

@@ -38,7 +38,7 @@ def abc(request, route):
         request.GET.dict(),
         data,
     )
-    resp = JsonResponse(response.create_response())
+    resp = JsonResponse(response.create_response(), status=endpoint.active_status_code)
     for header in active_status_code._headers:
-        resp.__setitem__(header["key"], header["value"])
+        resp.__setitem__(header["key"].title(), header["value"])
     return resp

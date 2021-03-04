@@ -47,6 +47,11 @@ update_endpoint_schema_schema = validate(
     ),
 )
 
+update_status_code_schema = validate(
+    make_number_object("id"),
+    make_string_object("status_code")
+)
+
 create_schema_schema = validate(make_string_object("name"), fields_key)
 
 update_schema_schema = validate(

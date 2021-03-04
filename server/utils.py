@@ -29,8 +29,6 @@ class Response:
             page = dict()
             for field in self.fields:
                 page[field.key] = self.mapping[field.type](field)
-            if not page:
-                continue
             data.append(page)
 
         return data

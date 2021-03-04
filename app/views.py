@@ -15,6 +15,10 @@ from .services import (
     endpoint_schema_update,
     relative_endpoint_update,
     relative_endpoint_delete,
+    status_code_add,
+    status_code_set,
+    status_code_update,
+    status_code_delete,
     data_export,
     data_import,
     schema_update,
@@ -95,6 +99,38 @@ def update_relative_endpoint(request):
     data = request.json
     relative_endpoint_update(data)
     return dict()
+
+
+@require_POST
+@update_status_code_schema
+def add_status_code(request):
+    data = request.json
+    status_code = status_code_add(data)
+    return dict(new_status_code=status_code)
+
+
+@require_POST
+@update_status_code_schema
+def set_status_code(request):
+    data = request.json
+    status_code_set(data)
+    return dict()
+
+
+@require_POST
+@update_status_code_schema
+def update_status_code(request):
+    data = request.json
+    status_code_update(data)
+    return dict()
+
+
+@require_POST
+@update_status_code_schema
+def delete_status_code(request):
+    data = request.json
+    new_status_code = status_code_delete(data)
+    return dict(new_status_code=new_status_code)
 
 
 @require_POST

@@ -134,9 +134,9 @@ def endpoint_schema_update(data):
     Field.objects.bulk_create(
         [Field(status_code_id=active_status.id, **field) for field in new_fields]
     )
-    endpoint.meta_data = data["meta_data"]
-    endpoint.headers = data["headers"]
-    endpoint.save()
+    active_status.meta_data = data["meta_data"]
+    active_status.headers = data["headers"]
+    active_status.save()
     return active_status
 
 
@@ -158,6 +158,62 @@ def relative_endpoint_update(data):
         method=data["method"],
         regex_endpoint=data["regex_endpoint"],
     )
+
+
+def status_code_update(data):
+    relative_endpoint = RelativeEndpoint.objects.get(id=data["id"])
+    status_code = StatusCode.objects.get(status_code=relative_endpoint.active_status_code, relative_endpoint_id=data['id'])
+    try:
+        if len(data['status_code']) != 3:
+            raise ValueError
+        data['status_code'] = int(data['status_code'])
+        if not (100 <= data['status_code'] <= 999):
+            raise NotAllowed("Status code should be between 100 and 999 ")
+
+        if StatusCode.objects.filter(status_code=data['status_code'], relative_endpoint_id=data['id']).exists():
+            raise NotAllowed("Cannot have two responses with same status code")
+        status_code.status_code = data['status_code']
+        status_code.save()
+        relative_endpoint.active_status_code = data['status_code']
+        relative_endpoint.save()
+    except ValueError:
+        raise NotAllowed("Status code should be a 3 digit number")
+
+
+def status_code_set(data):
+    relative_endpoint = RelativeEndpoint.objects.get(id=data["id"])
+    if not StatusCode.objects.filter(status_code=data['status_code'], relative_endpoint_id=data['id']).exists():
+        raise NotAllowed("The new status code doesn't exist")
+    relative_endpoint.active_status_code = data['status_code']
+    relative_endpoint.save()
+
+
+def status_code_add(data):
+    relative_endpoint = RelativeEndpoint.objects.get(id=data["id"])
+    try:
+        if len(data['status_code']) != 3:
+            raise ValueError
+        data['status_code'] = int(data['status_code'])
+        if not (100 <= data['status_code'] <= 999):
+            raise NotAllowed("Status code should be between 100 and 999 ")
+        if StatusCode.objects.filter(status_code=data['status_code'], relative_endpoint_id=data['id']).exists():
+            raise NotAllowed("Cannot have two responses with same status code")
+        status_code = StatusCode.objects.create(relative_endpoint_id=data['id'], status_code=data['status_code'])
+        relative_endpoint.active_status_code = data['status_code']
+        relative_endpoint.save()
+        return status_code.detail()
+    except ValueError:
+        raise NotAllowed("Status code should be a 3 digit number")
+
+
+def status_code_delete(data):
+    relative_endpoint = RelativeEndpoint.objects.get(id=data["id"])
+    if relative_endpoint.status_codes.count() == 1:
+        raise NotAllowed("Cannot have endpoint with no status code")
+    StatusCode.objects.get(status_code=data['status_code'], relative_endpoint_id=data['id']).delete()
+    relative_endpoint.active_status_code = StatusCode.objects.filter(relative_endpoint_id=data['id']).first().status_code
+    relative_endpoint.save()
+    return relative_endpoint.active_status_code
 
 
 def relative_endpoint_delete(data):
