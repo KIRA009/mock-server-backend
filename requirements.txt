@@ -1,6 +1,6 @@
 asgiref==3.2.10
 attrs==19.3.0
-Django==3.0.8
+Django==3.1.13
 django-cors-headers==3.7.0
 Faker==5.3.0
 importlib-metadata==1.7.0
